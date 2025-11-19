@@ -1,0 +1,66 @@
+# Build outputs
+bin/
+obj/
+out/
+*.dll
+*.exe
+*.app
+
+# User-specific
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+*.code-workspace
+
+# Rider IDE
+.idea/
+
+# Logs
+*.log
+
+# Database / EF Core
+*.db
+*.sqlite
+*.mdf
+*.ldf
+
+# Docker
+docker-compose.override.yml
+**/Dockerfile*
+**/docker-compose.override.yml
+*.env
+
+# Kubernetes / Helm
+.kube/
+*.kubeconfig
+helm-debug/
+
+# NuGet packages
+*.nupkg
+packages/
+.nuget/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Node / front-end (if used in Angular)
+node_modules/
+dist/
+npm-debug.log
+yarn-error.log
+
+# Ignore GitHub workflow cache
+.github/.cache/
