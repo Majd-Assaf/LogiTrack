@@ -1,0 +1,20 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY ["LogiTrack.sln", ""]
+COPY src/TransportService/TransportService.Api/TransportService.Api.csproj src/TransportService/TransportService.Api/
+COPY src/TransportService/TransportService.Domain/TransportService.Domain.csproj src/TransportService/TransportService.Domain/
+COPY src/TransportService/TransportService.Infrastructure/TransportService.Infrastructure.csproj src/TransportService/TransportService.Infrastructure/
+COPY src/TrackingService/TrackingService.Worker/TrackingService.Worker.csproj src/TrackingService/TrackingService.Worker/
+COPY src/NotificationService/NotificationService.Api/NotificationService.Api.csproj src/NotificationService/NotificationService.Api/
+COPY tests/Test/Test.csproj tests/Test/
+RUN dotnet restore "LogiTrack.sln"
+COPY . .
+WORKDIR "/src/src/TrackingService/TrackingService.Worker"
+RUN dotnet publish "TrackingService.Worker.csproj" -c Release -o /app/publish
+
+FROM mcr.microsoft.com/dotnet/runtime:8.0
+WORKDIR /app
+RUN useradd -m appuser
+USER appuser
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "TrackingService.Worker.dll"]
