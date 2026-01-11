@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Build & Test (.NET 8)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore LogiTrack.sln
+
+      - name: Build solution
+        run: dotnet build LogiTrack.sln --no-restore --configuration Release
+
+      - name: Run Tests
+        run: dotnet test LogiTrack.sln --no-build --configuration Release --collect:"XPlat Code Coverage"
+        env:
+          DOTNET_ENVIRONMENT: Test
+
+  docker-build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: build-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Transport Service
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfiles/TransportService.Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/Transport-service:latest
+
+      - name: Build & Push Tracking Service
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfiles/TrackingService.Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/tracking-service:latest
+
+      - name: Build & Push Notification Service
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfiles/NotificationService.Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/notification-service:latest
