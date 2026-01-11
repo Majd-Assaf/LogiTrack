@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transportservice
+  namespace: logitrack
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: transportservice
+  template:
+    metadata:
+      labels:
+        app: transportservice
+    spec:
+      containers:
+      - name: transportservice
+        image: logitrack/transport.api:latest
+        imagePullPolicy: Never
+
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ASPNETCORE_URLS
+          value: "http://+:8080"
+        - name: RABBITMQ_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: logitrack-config
+              key: RABBITMQ_HOST
+        - name: RABBITMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: logitrack-secret
+              key: RABBITMQ_USER
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: logitrack-secret
+              key: RABBITMQ_PASSWORD
+        - name: ConnectionStrings__DefaultConnection
+          value: "server=mysql;port=3306;database=logitrack;uid=app;pwd=app"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+      initContainers:
+      - name: wait-for-rabbitmq
+        image: busybox:1.36
+        command: ['sh', '-c', 'until nc -z rabbitmq.logitrack.svc.cluster.local 5672; do echo waiting for rabbitmq; sleep 2; done;']
+      - name: wait-for-mysql
+        image: busybox:1.36
+        command: ['sh', '-c', 'until nc -z mysql.logitrack.svc.cluster.local 3306; do echo waiting for mysql; sleep 2; done;']

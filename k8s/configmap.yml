@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logitrack-config
+  namespace: logitrack
+data:
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+  MYSQL_HOST: "mysql"
+  MYSQL_DB: "logitrack"
