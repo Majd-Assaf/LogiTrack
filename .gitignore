@@ -31,7 +31,6 @@ out/
 
 # Docker
 docker-compose.override.yml
-**/Dockerfile*
 **/docker-compose.override.yml
 *.env
 
